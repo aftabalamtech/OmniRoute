@@ -1,8 +1,6 @@
-# ──────────────────────────────────────────────────────────────────────
-#  OmniRoute — Docker Compose
-# ──────────────────────────────────────────────────────────────────────
-# CloudDabba-compatible: static published ports avoid CloudDabba parser
-# errors with ${VAR:-default} port expressions.
+# OmniRoute Docker Compose - CloudDabba compatible
+# CloudDabba runs docker compose without selecting profiles, so the default
+# OmniRoute service must have no profile. Only the application port is published.
 
 x-common: &common
   restart: unless-stopped
@@ -38,8 +36,6 @@ services:
     image: docker.io/library/redis:8.6.5-alpine
     container_name: omniroute-redis
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     command: redis-server --save 60 1 --loglevel warning
@@ -49,6 +45,7 @@ services:
       timeout: 5s
       retries: 3
 
+  # Default service for CloudDabba. No Compose profile on purpose.
   omniroute-base:
     <<: *common
     container_name: omniroute
@@ -58,13 +55,14 @@ services:
       args:
         OMNIROUTE_BASE_PATH: ${OMNIROUTE_BASE_PATH:-}
     image: omniroute:base
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "20128:20128"
-      - "20129:20129"
-      - "20132:20132"
-    profiles:
-      - base
 
+  # Optional profiles. They intentionally do not publish host ports so
+  # CloudDabba cannot mistake a sidecar/profile for the web service.
   omniroute-web:
     <<: *common
     container_name: omniroute
@@ -75,6 +73,8 @@ services:
         OMNIROUTE_BASE_PATH: ${OMNIROUTE_BASE_PATH:-}
     image: omniroute:web
     depends_on:
+      redis:
+        condition: service_healthy
       chatgpt-web-codex-browser:
         condition: service_started
     environment:
@@ -89,12 +89,7 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - OMNIROUTE_BASE_PATH=${OMNIROUTE_BASE_PATH:-}
       - CHATGPT_WEB_CODEX_CDP_URL=http://chatgpt-web-codex-browser:9223
-    ports:
-      - "20128:20128"
-      - "20129:20129"
-      - "20132:20132"
-    profiles:
-      - web
+    profiles: [web]
 
   chatgpt-web-codex-browser:
     build:
@@ -105,8 +100,7 @@ services:
     shm_size: "2gb"
     volumes:
       - chatgpt-web-codex-browser-data:/browser-profile
-    profiles:
-      - web
+    profiles: [web]
 
   omniroute-cli:
     <<: *common
@@ -117,17 +111,12 @@ services:
       args:
         OMNIROUTE_BASE_PATH: ${OMNIROUTE_BASE_PATH:-}
     image: omniroute:cli
-    ports:
-      - "20128:20128"
-      - "20129:20129"
-      - "20132:20132"
     volumes:
       - ./data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/libexec/docker/cli-plugins:/usr/libexec/docker/cli-plugins:ro
       - ${AUTO_UPDATE_HOST_REPO_DIR:-.}:/workspace/omniroute:rw
-    profiles:
-      - cli
+    profiles: [cli]
 
   omniroute-host:
     <<: *common
@@ -138,10 +127,6 @@ services:
       args:
         OMNIROUTE_BASE_PATH: ${OMNIROUTE_BASE_PATH:-}
     image: omniroute:base
-    ports:
-      - "20128:20128"
-      - "20129:20129"
-      - "20132:20132"
     environment:
       - DATA_DIR=/app/data
       - PORT=${PORT:-20128}
@@ -164,16 +149,12 @@ services:
       - ~/.openclaw:/host-home/.openclaw:rw
       - ~/.cursor:/host-home/.cursor:rw
       - ~/.config/cursor:/host-home/.config/cursor:rw
-    profiles:
-      - host
+    profiles: [host]
 
   qdrant:
     image: docker.io/qdrant/qdrant:v1.12.4
     container_name: omniroute-qdrant
     restart: unless-stopped
-    ports:
-      - "6333:6333"
-      - "6334:6334"
     volumes:
       - qdrant-data:/qdrant/storage
     environment:
@@ -184,15 +165,12 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    profiles:
-      - memory
+    profiles: [memory]
 
   bifrost:
     image: ghcr.io/maximhq/bifrost:v1.6.11
     container_name: omniroute-bifrost
     restart: unless-stopped
-    ports:
-      - "8080:8080"
     volumes:
       - bifrost-data:/data
     environment:
@@ -203,15 +181,12 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
-    profiles:
-      - bifrost
+    profiles: [bifrost]
 
   cliproxyapi:
     container_name: cliproxyapi
     image: docker.io/eceasy/cli-proxy-api:v6.9.7
     restart: unless-stopped
-    ports:
-      - "8317:8317"
     volumes:
       - cliproxyapi-data:/root/.cli-proxy-api
     environment:
@@ -223,8 +198,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    profiles:
-      - cliproxyapi
+    profiles: [cliproxyapi]
 
   codex-app-server:
     image: omniroute:base
@@ -253,8 +227,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    profiles:
-      - codex-app-server
+    profiles: [codex-app-server]
 
 volumes:
   chatgpt-web-codex-browser-data:
