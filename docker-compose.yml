@@ -99,9 +99,9 @@ services:
         OMNIROUTE_BASE_PATH: ${OMNIROUTE_BASE_PATH:-}
     image: omniroute:base
     ports:
-      - "${DASHBOARD_PORT:-20128}:${DASHBOARD_PORT:-20128}"
-      - "${API_PORT:-20129}:${API_PORT:-20129}"
-      - "${LIVE_WS_PORT:-20132}:${LIVE_WS_PORT:-20132}"
+      - "20128:20128"
+      - "20129:20129"
+      - "20132:20132"
     profiles:
       - base
 
@@ -134,9 +134,9 @@ services:
       - OMNIROUTE_BASE_PATH=${OMNIROUTE_BASE_PATH:-}
       - CHATGPT_WEB_CODEX_CDP_URL=http://chatgpt-web-codex-browser:9223
     ports:
-      - "${DASHBOARD_PORT:-20128}:${DASHBOARD_PORT:-20128}"
-      - "${API_PORT:-20129}:${API_PORT:-20129}"
-      - "${LIVE_WS_PORT:-20132}:${LIVE_WS_PORT:-20132}"
+      - "20128:20128"
+      - "20129:20129"
+      - "20132:20132"
     profiles:
       - web
 
@@ -165,9 +165,9 @@ services:
         OMNIROUTE_BASE_PATH: ${OMNIROUTE_BASE_PATH:-}
     image: omniroute:cli
     ports:
-      - "${DASHBOARD_PORT:-20128}:${DASHBOARD_PORT:-20128}"
-      - "${API_PORT:-20129}:${API_PORT:-20129}"
-      - "${LIVE_WS_PORT:-20132}:${LIVE_WS_PORT:-20132}"
+      - "20128:20128"
+      - "20129:20129"
+      - "20132:20132"
     volumes:
       - ./data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
@@ -187,9 +187,9 @@ services:
         OMNIROUTE_BASE_PATH: ${OMNIROUTE_BASE_PATH:-}
     image: omniroute:base
     ports:
-      - "${DASHBOARD_PORT:-20128}:${DASHBOARD_PORT:-20128}"
-      - "${API_PORT:-20129}:${API_PORT:-20129}"
-      - "${LIVE_WS_PORT:-20132}:${LIVE_WS_PORT:-20132}"
+      - "20128:20128"
+      - "20129:20129"
+      - "20132:20132"
     environment:
       - DATA_DIR=/app/data
       - PORT=${PORT:-20128}
